@@ -170,18 +170,23 @@ for n in range(294, 304):
 
     print(generator_input.shape, type(generator_input), gen1_input.shape, type(gen1_input))
     synth_img = s1_generator.predict(x=generator_input) #Generated synthetic image
-    #both_img = np.concatenate((img, synth_img), axis=0)
-    #print("HEHEHEHEH" + str(both_img.shape))
+    both_img = np.concatenate((img, synth_img), axis=0)
 
     gt1 = np.array(1)
     gt2 = np.array(0)
     gt1 = gt1.reshape(1,1,1)
     gt2 = gt2.reshape(1,1,1)
-    both_gt = [gt1, gt2]
+    both_gt = np.concatenate((gt1, gt2))
+    both_enc = np.concatenate((enc, enc))
 
-    s1_discriminator.train_on_batch(x=[img, enc], y=both_gt[0])
-    s1_discriminator.train_on_batch(x=[synth_img, enc], y=both_gt[1])
-    train_model_s1.train_on_batch(x=np.array([img]), y=np.array([1]))
+    s1_discriminator.train_on_batch(x=[both_img, both_enc], y=[both_gt])
+
+    new_noise = np.random.normal(size=(1,4,4,1024)) # Noise vector to train generator
+    new_noise = np.concatenate((new_noise, enc), axis=3)
+
+    gt3 = np.array(0)   # assuming 0 is fake and 1 is real
+    gt3 = gt3.reshape(1,1,1)
+    train_model_s1.train_on_batch(x=[new_noise, enc], y=gt3)
 
 
 
