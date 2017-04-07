@@ -95,7 +95,7 @@ s1_gen = keras.layers.convolutional.Conv2DTranspose(3, (4, 4), strides=(2, 2), p
 gen1_output = keras.layers.convolutional.Conv2D(3, 3, strides=(1, 1), padding='valid', data_format='channels_last', dilation_rate=(1, 1), activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None)(s1_gen)
 
 s1_generator = Model(inputs=[gen1_input], outputs=[gen1_output])
-s1_generator.summary()
+#s1_generator.summary()
 
 ################################## S 1 Partial - Discriminator // S 2 Generator ###################################
 
@@ -124,7 +124,7 @@ s1_c = keras.layers.core.Reshape((1, 18432))(s1_c)
 s1_c = keras.layers.core.Dense(1, activation='relu', use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None)(s1_c)
 
 s1_discriminator = Model(inputs=[di1_input, concatenated_vector], outputs=[s1_c])
-#s1_discriminator.summary()
+s1_discriminator.summary()
 
 #############################################  S 1 Full model  #########################################
 
@@ -158,7 +158,7 @@ for n in range(294, 304):
         print(os.path.join("./pubfig_resized/",img_path))
         continue
     img = image.img_to_array(img)
-    print("image" + str(img.shape))
+    img = img.reshape(1, 128, 128, 3)
     print(encoding[n])
     conc = np.concatenate([encoding[n], np.zeros(54)])
     print(conc.shape)
@@ -170,9 +170,17 @@ for n in range(294, 304):
 
     print(generator_input.shape, type(generator_input), gen1_input.shape, type(gen1_input))
     synth_img = s1_generator.predict(x=generator_input) #Generated synthetic image
-    both_img = np.array([img,synth_img]) #Both images in array
-    both_gt = [1,0] #Ground truth values for both images
-    s1_discriminator.train_on_batch(x=[both_img, enc], y=both_gt)
+    #both_img = np.concatenate((img, synth_img), axis=0)
+    #print("HEHEHEHEH" + str(both_img.shape))
+
+    gt1 = np.array(1)
+    gt2 = np.array(0)
+    gt1 = gt1.reshape(1,1,1)
+    gt2 = gt2.reshape(1,1,1)
+    both_gt = [gt1, gt2]
+
+    s1_discriminator.train_on_batch(x=[img, enc], y=both_gt[0])
+    s1_discriminator.train_on_batch(x=[synth_img, enc], y=both_gt[1])
     train_model_s1.train_on_batch(x=np.array([img]), y=np.array([1]))
 
 
